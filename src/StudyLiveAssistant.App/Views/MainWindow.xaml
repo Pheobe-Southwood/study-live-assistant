@@ -1,0 +1,169 @@
+<Window x:Class="StudyLiveAssistant.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:StudyLiveAssistant.App.Views"
+        Title="自习直播助手" Width="1180" Height="780" MinWidth="980" MinHeight="680"
+        WindowStartupLocation="CenterScreen" Closing="MainWindow_Closing">
+    <Window.Resources>
+        <views:EnumTextConverter x:Key="EnumText"/>
+        <Style TargetType="TabItem">
+            <Setter Property="Width" Value="150"/><Setter Property="Height" Value="48"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="Padding" Value="18,0"/>
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="22"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="8,4,8,16"/>
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="4,2"/>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="64"/><RowDefinition Height="*"/><RowDefinition Height="36"/></Grid.RowDefinitions>
+        <Border Grid.Row="0" Background="White" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
+            <Grid Margin="22,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="34" Height="34" CornerRadius="10" Background="{StaticResource Primary}" Margin="0,0,12,0">
+                        <TextBlock Text="习" Foreground="White" FontSize="19" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="自习直播助手" FontSize="21" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="为学习服务 · 本地离线" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="1" TabStripPlacement="Left" Background="Transparent" BorderThickness="0">
+            <TabItem Header="首页">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
+                    <TextBlock Text="今天，专注做好一件事" Style="{StaticResource SectionTitle}"/>
+                    <UniformGrid Columns="3" Margin="4,0,4,18">
+                        <Border Background="White" CornerRadius="12" Margin="6" Padding="18"><StackPanel><TextBlock Text="直播窗口" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{Binding WindowStatus}" Style="{StaticResource Hint}" Margin="0,8,0,10"/><StackPanel Orientation="Horizontal"><Button Content="启动窗口" Style="{StaticResource PrimaryButton}" Command="{Binding ShowLiveCommand}"/><Button Content="关闭窗口" Command="{Binding CloseLiveCommand}"/></StackPanel></StackPanel></Border>
+                        <Border Background="White" CornerRadius="12" Margin="6" Padding="18"><StackPanel><TextBlock Text="学习模式" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{Binding TimerStatus}" Style="{StaticResource Hint}" Margin="0,8,0,10"/><Button Content="开启学习模式" Style="{StaticResource PrimaryButton}" Command="{Binding EnterStudyModeCommand}" HorizontalAlignment="Left"/></StackPanel></Border>
+                        <Border Background="White" CornerRadius="12" Margin="6" Padding="18"><StackPanel><TextBlock Text="当前安排" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{Binding CurrentTaskStatus}" Style="{StaticResource Hint}" Margin="0,8,0,0"/></StackPanel></Border>
+                    </UniformGrid>
+                    <GroupBox Header="快速提示"><StackPanel>
+                        <TextBlock Text="1. 在“学习任务管理”建立今日任务，并按起始时间安排顺序。" Margin="4"/>
+                        <TextBlock Text="2. 启动直播窗口后，在 OBS 中使用“窗口采集”捕获 StudyLiveAssistant。" Margin="4"/>
+                        <TextBlock Text="3. 开启学习模式后可用全局快捷键控制，不必切回配置窗口。" Margin="4"/>
+                    </StackPanel></GroupBox>
+                </StackPanel></ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="基础配置">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
+                    <TextBlock Text="基础配置" Style="{StaticResource SectionTitle}"/>
+                    <GroupBox Header="直播画布"><StackPanel><WrapPanel>
+                        <StackPanel><TextBlock Text="宽度"/><TextBox Width="110" Text="{Binding Appearance.CanvasWidth, UpdateSourceTrigger=LostFocus}"/></StackPanel>
+                        <StackPanel><TextBlock Text="高度"/><TextBox Width="110" Text="{Binding Appearance.CanvasHeight, UpdateSourceTrigger=LostFocus}"/></StackPanel>
+                        <StackPanel><TextBlock Text="上栏比例"/><TextBox Width="110" Text="{Binding Appearance.TopBarRatio, UpdateSourceTrigger=LostFocus}"/></StackPanel>
+                        <StackPanel><TextBlock Text="左栏比例"/><TextBox Width="110" Text="{Binding Appearance.LeftBarRatio, UpdateSourceTrigger=LostFocus}"/></StackPanel>
+                        <StackPanel><TextBlock Text="窗口 X"/><TextBox Width="100" Text="{Binding Appearance.WindowLeft}"/></StackPanel>
+                        <StackPanel><TextBlock Text="窗口 Y"/><TextBox Width="100" Text="{Binding Appearance.WindowTop}"/></StackPanel>
+                    </WrapPanel><StackPanel Orientation="Horizontal"><Button Content="1920 × 1080" Click="Canvas1080_Click"/><Button Content="1280 × 720" Click="Canvas720_Click"/></StackPanel></StackPanel></GroupBox>
+                    <GroupBox Header="颜色与字体"><WrapPanel>
+                        <StackPanel><TextBlock Text="绿幕颜色"/><TextBox Width="130" Text="{Binding Appearance.ChromaColor}"/></StackPanel>
+                        <StackPanel><TextBlock Text="信息区颜色"/><TextBox Width="130" Text="{Binding Appearance.InfoBackgroundColor}"/></StackPanel>
+                        <StackPanel><TextBlock Text="字体颜色"/><TextBox Width="130" Text="{Binding Appearance.FontColor}"/></StackPanel>
+                        <StackPanel><TextBlock Text="字体"/><TextBox Width="180" Text="{Binding Appearance.FontFamily}"/></StackPanel>
+                        <StackPanel><TextBlock Text="上栏字号"/><TextBox Width="100" Text="{Binding Appearance.TopFontSize}"/></StackPanel>
+                        <StackPanel><TextBlock Text="标题字号"/><TextBox Width="100" Text="{Binding Appearance.TitleFontSize}"/></StackPanel>
+                        <StackPanel><TextBlock Text="正文字号"/><TextBox Width="100" Text="{Binding Appearance.BodyFontSize}"/></StackPanel>
+                    </WrapPanel></GroupBox>
+                    <GroupBox Header="信息区背景图"><StackPanel>
+                        <TextBlock Text="{Binding Appearance.InfoBackgroundImage, TargetNullValue=未选择背景图}" Style="{StaticResource Hint}"/>
+                        <StackPanel Orientation="Horizontal"><Button Content="导入图片" Click="BrowseBackground_Click"/><Button Content="恢复纯色" Command="{Binding ClearBackgroundCommand}"/></StackPanel>
+                    </StackPanel></GroupBox>
+                    <GroupBox Header="顶部信息栏"><StackPanel>
+                        <WrapPanel><CheckBox Content="倒数日" IsChecked="{Binding Appearance.ShowCountdown}" Margin="8"/><CheckBox Content="今日学习时长" IsChecked="{Binding Appearance.ShowTodayDuration}" Margin="8"/><CheckBox Content="当前任务" IsChecked="{Binding Appearance.ShowCurrentTask}" Margin="8"/><CheckBox Content="当前时间" IsChecked="{Binding Appearance.ShowClock}" Margin="8"/><CheckBox Content="连续滚动" IsChecked="{Binding Appearance.ScrollTopBar}" Margin="8"/></WrapPanel>
+                        <DockPanel><TextBlock Text="自定义短句" VerticalAlignment="Center"/><TextBox Text="{Binding Appearance.CustomTopText}" MinWidth="420"/></DockPanel>
+                    </StackPanel></GroupBox>
+                    <GroupBox Header="倒数日"><Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <ListBox ItemsSource="{Binding Countdowns}" SelectedItem="{Binding SelectedCountdown}" DisplayMemberPath="Name" Height="130"/>
+                        <StackPanel Grid.Column="1" Margin="12,0"><WrapPanel><TextBox Width="220" Text="{Binding CountdownName}"/><DatePicker SelectedDate="{Binding CountdownDate}"/></WrapPanel><StackPanel Orientation="Horizontal"><Button Content="新建" Command="{Binding NewCountdownCommand}"/><Button Content="保存" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCountdownCommand}"/><Button Content="删除" Command="{Binding DeleteCountdownCommand}"/></StackPanel></StackPanel>
+                    </Grid></GroupBox>
+                    <Button Content="保存基础配置" Style="{StaticResource PrimaryButton}" Command="{Binding SaveAppearanceCommand}" HorizontalAlignment="Left" Padding="24,10"/>
+                </StackPanel></ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="学习任务管理">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
+                    <TextBlock Text="学习任务管理" Style="{StaticResource SectionTitle}"/>
+                    <WrapPanel Margin="4"><TextBlock Text="计划日期" VerticalAlignment="Center"/><DatePicker SelectedDate="{Binding SelectedDate}"/><Button Content="复制前一天任务" Command="{Binding CopyPreviousDayCommand}"/><TextBlock Text="每日目标（分钟）" VerticalAlignment="Center" Margin="12,0,0,0"/><TextBox Width="100" Text="{Binding DailyTargetMinutes, TargetNullValue=''}"/><Button Content="保存目标" Command="{Binding SaveDailyTargetCommand}"/></WrapPanel>
+                    <GroupBox Header="任务编辑器"><StackPanel>
+                        <WrapPanel>
+                            <StackPanel><TextBlock Text="一级类型"/><ComboBox ItemsSource="{Binding PrimaryCategories}" SelectedItem="{Binding SelectedPrimaryCategory}" DisplayMemberPath="Name"/></StackPanel>
+                            <StackPanel><TextBlock Text="二级类型"/><ComboBox ItemsSource="{Binding SecondaryCategories}" SelectedItem="{Binding SelectedSecondaryCategory}" DisplayMemberPath="Name"/></StackPanel>
+                            <StackPanel><TextBlock Text="详细信息（可选）"/><TextBox Width="220" Text="{Binding TaskDetail}"/></StackPanel>
+                            <StackPanel><TextBlock Text="起始时间 HH:mm"/><TextBox Width="110" Text="{Binding StartTimeText}"/></StackPanel>
+                            <StackPanel><TextBlock Text="进度类型"/><ComboBox ItemsSource="{Binding ProgressKinds}" SelectedItem="{Binding SelectedProgressKind}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumText}}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox></StackPanel>
+                            <StackPanel><TextBlock Text="单位"/><ComboBox ItemsSource="{Binding ProgressUnits}" SelectedItem="{Binding SelectedUnit}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumText}}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox></StackPanel>
+                            <StackPanel><TextBlock Text="自定义单位"/><TextBox Width="110" Text="{Binding CustomUnit}"/></StackPanel>
+                            <StackPanel><TextBlock Text="目标值"/><TextBox Width="100" Text="{Binding TargetValue}"/></StackPanel>
+                            <StackPanel><TextBlock Text="加减步长"/><TextBox Width="100" Text="{Binding AdjustmentStep}"/></StackPanel>
+                            <StackPanel><TextBlock Text="预计用时（分钟）"/><TextBox Width="120" Text="{Binding ExpectedMinutes, TargetNullValue=''}"/></StackPanel>
+                        </WrapPanel>
+                        <StackPanel Orientation="Horizontal"><Button Content="添加 / 更新任务" Style="{StaticResource PrimaryButton}" Command="{Binding SaveTaskCommand}"/><Button Content="清空编辑器" Command="{Binding ResetTaskEditorCommand}"/></StackPanel>
+                    </StackPanel></GroupBox>
+                    <DataGrid ItemsSource="{Binding TaskRows}" SelectedItem="{Binding SelectedTaskRow}" AutoGenerateColumns="False" IsReadOnly="True" Height="245" Margin="8">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="开始" Binding="{Binding TimeText}" Width="70"/><DataGridTextColumn Header="任务" Binding="{Binding Title}" Width="*"/>
+                            <DataGridTextColumn Header="已用时间" Binding="{Binding ElapsedText}" Width="120"/><DataGridTextColumn Header="进度" Binding="{Binding ProgressText}" Width="150"/><DataGridTextColumn Header="状态" Binding="{Binding StatusText}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Orientation="Horizontal"><Button Content="编辑所选" Command="{Binding EditTaskCommand}"/><Button Content="删除所选" Command="{Binding DeleteTaskCommand}"/></StackPanel>
+                    <GroupBox Header="任务类型管理"><StackPanel>
+                        <WrapPanel><TextBox Width="180" Text="{Binding NewPrimaryName}"/><TextBox Width="110" Text="{Binding NewCategoryColor}"/><Button Content="新增一级类型" Command="{Binding AddPrimaryCategoryCommand}"/></WrapPanel>
+                        <WrapPanel><TextBlock Text="所属一级类型" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding PrimaryCategories}" SelectedItem="{Binding SelectedPrimaryCategory}" DisplayMemberPath="Name"/><TextBox Width="180" Text="{Binding NewSecondaryName}"/><Button Content="新增二级类型" Command="{Binding AddSecondaryCategoryCommand}"/></WrapPanel>
+                        <WrapPanel><ComboBox Width="230" ItemsSource="{Binding AllCategories}" SelectedItem="{Binding SelectedCategoryToDelete}" DisplayMemberPath="Name"/><TextBox Width="180" Text="{Binding SelectedCategoryName}"/><TextBox Width="110" Text="{Binding SelectedCategoryAccent}"/><Button Content="更新所选类型" Command="{Binding UpdateCategoryCommand}"/><Button Content="删除所选类型" Command="{Binding DeleteCategoryCommand}"/></WrapPanel>
+                        <TextBlock Text="内置与自定义类型均可修改；已被任务引用的类型为保护历史数据不能删除。" Style="{StaticResource Hint}"/>
+                    </StackPanel></GroupBox>
+                </StackPanel></ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="显示样式">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
+                    <TextBlock Text="显示样式" Style="{StaticResource SectionTitle}"/>
+                    <GroupBox Header="任务卡主题"><StackPanel>
+                        <ComboBox Width="260" HorizontalAlignment="Left" ItemsSource="{Binding Themes}" SelectedItem="{Binding Appearance.Theme}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumText}}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox>
+                        <TextBlock Text="基础专注型克制清爽；软萌风使用低饱和圆角；游戏风使用深色与金色线框，不包含任何第三方游戏素材。" Style="{StaticResource Hint}"/>
+                    </StackPanel></GroupBox>
+                    <GroupBox Header="进度条"><StackPanel><CheckBox Content="显示任务进度条" IsChecked="{Binding Appearance.ShowProgressBar}" Margin="6"/><ComboBox Width="260" HorizontalAlignment="Left" ItemsSource="{Binding ProgressStyles}" SelectedItem="{Binding Appearance.ProgressStyle}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumText}}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox></StackPanel></GroupBox>
+                    <GroupBox Header="滚动速度"><StackPanel Orientation="Horizontal"><Slider Minimum="15" Maximum="120" Width="320" Value="{Binding Appearance.ScrollSpeed}"/><TextBlock Text="{Binding Appearance.ScrollSpeed, StringFormat={}{0:0} px/s}" VerticalAlignment="Center" Margin="12,0"/></StackPanel></GroupBox>
+                    <Button Content="保存显示样式" Style="{StaticResource PrimaryButton}" Command="{Binding SaveAppearanceCommand}" HorizontalAlignment="Left"/>
+                </StackPanel></ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="快捷键">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
+                    <TextBlock Text="全局快捷键" Style="{StaticResource SectionTitle}"/>
+                    <TextBlock Text="快捷键在应用运行期间全局生效。保存时会检查重复和系统占用，失败时自动恢复原绑定。" Style="{StaticResource Hint}" Margin="8,0,8,18"/>
+                    <ItemsControl ItemsSource="{Binding HotkeyRows}"><ItemsControl.ItemTemplate><DataTemplate>
+                        <Border Background="White" CornerRadius="8" Margin="6" Padding="10"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="180"/><ColumnDefinition Width="180"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding ActionText}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding DataContext.ModifierOptions, RelativeSource={RelativeSource AncestorType=Window}}" SelectedItem="{Binding Modifier}"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding DataContext.KeyOptions, RelativeSource={RelativeSource AncestorType=Window}}" SelectedItem="{Binding Key}"/>
+                        </Grid></Border>
+                    </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                    <Button Content="保存并应用快捷键" Style="{StaticResource PrimaryButton}" Command="{Binding SaveHotkeysCommand}" HorizontalAlignment="Left" Margin="8,16"/>
+                </StackPanel></ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="学习统计">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
+                    <TextBlock Text="学习统计" Style="{StaticResource SectionTitle}"/>
+                    <UniformGrid Columns="3">
+                        <Border Background="White" CornerRadius="12" Margin="8" Padding="20"><StackPanel><TextBlock Text="今日" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{Binding TodayStatistics}" FontSize="16" Margin="0,12,0,0"/></StackPanel></Border>
+                        <Border Background="White" CornerRadius="12" Margin="8" Padding="20"><StackPanel><TextBlock Text="近 7 天" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{Binding WeekStatistics}" FontSize="16" Margin="0,12,0,0"/></StackPanel></Border>
+                        <Border Background="White" CornerRadius="12" Margin="8" Padding="20"><StackPanel><TextBlock Text="近 30 天" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{Binding MonthStatistics}" FontSize="16" Margin="0,12,0,0"/></StackPanel></Border>
+                    </UniformGrid>
+                    <Button Content="刷新统计" Command="{Binding ReloadStatisticsCommand}" HorizontalAlignment="Left" Margin="8,16"/>
+                    <TextBlock Text="这里只呈现必要的时长与完成数量，不设置排行、连续打卡或刺激性奖励。" Style="{StaticResource Hint}"/>
+                </StackPanel></ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="2" Background="White" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0">
+            <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Margin="18,0" Foreground="{StaticResource TextSecondary}"/>
+        </Border>
+    </Grid>
+</Window>

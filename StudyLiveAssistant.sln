@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StudyLiveAssistant.Core", "src\StudyLiveAssistant.Core\StudyLiveAssistant.Core.csproj", "{A61D41D5-FF38-40A3-ABEC-E54BA28DC91B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StudyLiveAssistant.App", "src\StudyLiveAssistant.App\StudyLiveAssistant.App.csproj", "{DF8617F5-10B3-4E95-92ED-FCCFCB485FE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StudyLiveAssistant.Tests", "tests\StudyLiveAssistant.Tests\StudyLiveAssistant.Tests.csproj", "{8DCE4B72-E55A-4689-988E-A8118330DE5D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A61D41D5-FF38-40A3-ABEC-E54BA28DC91B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A61D41D5-FF38-40A3-ABEC-E54BA28DC91B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A61D41D5-FF38-40A3-ABEC-E54BA28DC91B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A61D41D5-FF38-40A3-ABEC-E54BA28DC91B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF8617F5-10B3-4E95-92ED-FCCFCB485FE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF8617F5-10B3-4E95-92ED-FCCFCB485FE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF8617F5-10B3-4E95-92ED-FCCFCB485FE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF8617F5-10B3-4E95-92ED-FCCFCB485FE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DCE4B72-E55A-4689-988E-A8118330DE5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DCE4B72-E55A-4689-988E-A8118330DE5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DCE4B72-E55A-4689-988E-A8118330DE5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DCE4B72-E55A-4689-988E-A8118330DE5D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

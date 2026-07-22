@@ -1,0 +1,25 @@
+name: 功能建议
+description: 提议一个真正有助于学习的改进
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: use-case
+    attributes:
+      label: 使用场景
+      description: 这个功能会解决怎样的学习或直播问题？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+    validations:
+      required: true
+  - type: checkboxes
+    id: focus
+    attributes:
+      label: 专注原则
+      options:
+        - label: 该建议不会引入广告、排行或容易让人分心的机制。
+          required: true

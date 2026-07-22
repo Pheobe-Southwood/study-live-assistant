@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Test and publish Windows portable build
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: '**/*.csproj'
+
+      - name: Restore
+        run: dotnet restore StudyLiveAssistant.sln
+
+      - name: Test
+        run: dotnet test StudyLiveAssistant.sln --configuration Release --no-restore
+
+      - name: Publish self-contained single-file EXE
+        shell: pwsh
+        run: >-
+          dotnet publish src/StudyLiveAssistant.App/StudyLiveAssistant.App.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --no-restore
+          --output publish/app
+          -p:PublishSingleFile=true
+          -p:PublishTrimmed=false
+          -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Assemble portable package and checksum
+        id: package
+        shell: pwsh
+        run: |
+          Copy-Item LICENSE publish/app/LICENSE
+          Copy-Item docs/USAGE.md publish/app/使用说明.md
+          $zipName = "StudyLiveAssistant-${env:GITHUB_REF_NAME}-win-x64.zip"
+          Compress-Archive -Path publish/app/* -DestinationPath "publish/$zipName"
+          $hash = (Get-FileHash "publish/$zipName" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash *$zipName" | Set-Content -Encoding ascii "publish/$zipName.sha256"
+          "zip_name=$zipName" >> $env:GITHUB_OUTPUT
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: StudyLiveAssistant-${{ github.ref_name }}-win-x64
+          path: |
+            publish/${{ steps.package.outputs.zip_name }}
+            publish/${{ steps.package.outputs.zip_name }}.sha256
+          retention-days: 30
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: >-
+          gh release create "${env:GITHUB_REF_NAME}"
+          "publish/${{ steps.package.outputs.zip_name }}"
+          "publish/${{ steps.package.outputs.zip_name }}.sha256"
+          --title "自习直播助手 ${env:GITHUB_REF_NAME}"
+          --generate-notes
