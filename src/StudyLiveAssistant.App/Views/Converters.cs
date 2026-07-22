@@ -55,7 +55,7 @@ public sealed class ProgressMaskConverter : IValueConverter
         if (value is not ProgressBarStyle.Segmented) return Brushes.White;
         return new DrawingBrush
         {
-            Viewport = new Rect(0, 0, 15, 10), ViewportUnits = BrushMappingMode.Absolute, TileMode = Tile,
+            Viewport = new Rect(0, 0, 15, 10), ViewportUnits = BrushMappingMode.Absolute, TileMode = TileMode.Tile,
             Drawing = new GeometryDrawing(Brushes.White, null, new RectangleGeometry(new Rect(0, 0, 11, 10)))
         };
     }
