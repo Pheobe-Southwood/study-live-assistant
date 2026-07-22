@@ -16,6 +16,7 @@ public sealed class LocalDatabaseTests : IAsyncLifetime
 
     public ValueTask DisposeAsync()
     {
+        _database.Dispose();
         if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
         return ValueTask.CompletedTask;
     }

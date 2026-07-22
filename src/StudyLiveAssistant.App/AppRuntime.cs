@@ -90,7 +90,7 @@ public sealed class AppRuntime : IDisposable
             Settings.Appearance.WindowTop = _liveWindow?.Top ?? Settings.Appearance.WindowTop;
             _liveWindow = null;
             MainViewModel.RefreshStatus();
-            _ = SaveSettingsSafeAsync();
+            if (!_isShuttingDown) _ = SaveSettingsSafeAsync();
         };
         _liveWindow.Show();
         MainViewModel.RefreshStatus();
@@ -178,6 +178,7 @@ public sealed class AppRuntime : IDisposable
         _hotkeys?.Dispose();
         _studyWindow?.Close();
         _liveWindow?.Close();
+        Database.Dispose();
     }
 
     public void ReportError(Exception exception, string context, bool showMessage = true)

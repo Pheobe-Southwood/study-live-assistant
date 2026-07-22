@@ -6,7 +6,7 @@ using CountdownModel = StudyLiveAssistant.Core.CountdownEvent;
 
 namespace StudyLiveAssistant.App.Infrastructure;
 
-public sealed class LocalDatabase : ITaskRepository, ISettingsRepository
+public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDisposable
 {
     private readonly string _connectionString;
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -312,6 +312,12 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository
             command.Parameters.AddWithValue("$id", id.ToString());
             await command.ExecuteNonQueryAsync(cancellationToken);
         }, cancellationToken);
+
+    public void Dispose()
+    {
+        SqliteConnection.ClearAllPools();
+        _gate.Dispose();
+    }
 
     private async Task WithConnectionAsync(Func<SqliteConnection, Task> action, CancellationToken cancellationToken)
     {
