@@ -19,6 +19,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\StudyLiveAssistant.Core\StudyLiveAssistant.Core.csproj" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.10" />
   </ItemGroup>
 </Project>
