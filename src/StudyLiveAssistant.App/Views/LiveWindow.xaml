@@ -14,7 +14,7 @@
         <views:ProgressMaskConverter x:Key="ProgressMask"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
     </Window.Resources>
-    <Grid Background="{Binding InfoBackgroundBrush}" FontFamily="{Binding Appearance.FontFamily}" Foreground="{Binding FontBrush}">
+    <Grid Background="{Binding InfoBackgroundBrush}" TextElement.FontFamily="{Binding Appearance.FontFamily}" TextElement.Foreground="{Binding FontBrush}">
         <Grid.RowDefinitions><RowDefinition Height="{Binding TopHeight}"/><RowDefinition Height="*"/></Grid.RowDefinitions>
         <Grid.ColumnDefinitions><ColumnDefinition Width="{Binding LeftWidth}"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 
