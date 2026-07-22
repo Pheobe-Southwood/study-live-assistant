@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 using StudyLiveAssistant.Core;
+using CountdownModel = StudyLiveAssistant.Core.CountdownEvent;
 
 namespace StudyLiveAssistant.App.ViewModels;
 
@@ -28,7 +29,7 @@ public sealed class MainViewModel : BindableBase
     private string _newCategoryColor = "#7A9E9F";
     private string _selectedCategoryName = string.Empty;
     private string _selectedCategoryAccent = "#7A9E9F";
-    private CountdownEvent? _selectedCountdown;
+    private CountdownModel? _selectedCountdown;
     private string _countdownName = "目标日";
     private DateTime _countdownDate = DateTime.Today.AddDays(100);
     private string _statusMessage = "准备就绪";
@@ -65,7 +66,7 @@ public sealed class MainViewModel : BindableBase
     public ObservableCollection<TaskCategory> SecondaryCategories { get; } = [];
     public ObservableCollection<TaskCategory> AllCategories { get; } = [];
     public ObservableCollection<TaskCardViewModel> TaskRows { get; } = [];
-    public ObservableCollection<CountdownEvent> Countdowns { get; } = [];
+    public ObservableCollection<CountdownModel> Countdowns { get; } = [];
     public ObservableCollection<HotkeyEditRow> HotkeyRows { get; } = [];
 
     public IReadOnlyList<ProgressKind> ProgressKinds { get; } = Enum.GetValues<ProgressKind>();
@@ -130,7 +131,7 @@ public sealed class MainViewModel : BindableBase
     public string NewCategoryColor { get => _newCategoryColor; set => SetProperty(ref _newCategoryColor, value); }
     public string SelectedCategoryName { get => _selectedCategoryName; set => SetProperty(ref _selectedCategoryName, value); }
     public string SelectedCategoryAccent { get => _selectedCategoryAccent; set => SetProperty(ref _selectedCategoryAccent, value); }
-    public CountdownEvent? SelectedCountdown
+    public CountdownModel? SelectedCountdown
     {
         get => _selectedCountdown;
         set
@@ -415,7 +416,7 @@ public sealed class MainViewModel : BindableBase
     private async Task SaveCountdownAsync()
     {
         if (string.IsNullOrWhiteSpace(CountdownName)) throw new ArgumentException("倒数日名称不能为空。");
-        var item = SelectedCountdown ?? new CountdownEvent { SortOrder = Countdowns.Count };
+        var item = SelectedCountdown ?? new CountdownModel { SortOrder = Countdowns.Count };
         item.Name = CountdownName.Trim();
         item.TargetDate = DateOnly.FromDateTime(CountdownDate);
         await _runtime.Database.SaveCountdownEventAsync(item);

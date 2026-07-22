@@ -4,6 +4,7 @@ using StudyLiveAssistant.App.Infrastructure;
 using StudyLiveAssistant.App.ViewModels;
 using StudyLiveAssistant.App.Views;
 using StudyLiveAssistant.Core;
+using CountdownModel = StudyLiveAssistant.Core.CountdownEvent;
 
 namespace StudyLiveAssistant.App;
 
@@ -34,7 +35,7 @@ public sealed class AppRuntime : IDisposable
     public IStudySessionService Engine { get; }
     public AppSettings Settings { get; private set; }
     public IReadOnlyList<TaskCategory> Categories { get; private set; } = [];
-    public IReadOnlyList<CountdownEvent> Countdowns { get; private set; } = [];
+    public IReadOnlyList<CountdownModel> Countdowns { get; private set; } = [];
     public MainViewModel MainViewModel { get; private set; } = null!;
     public string AssetsDirectory => Path.Combine(_dataDirectory, "Assets");
     public bool IsLiveWindowOpen => _liveWindow is not null;

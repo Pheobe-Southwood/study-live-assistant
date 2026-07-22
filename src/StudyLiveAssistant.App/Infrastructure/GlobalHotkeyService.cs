@@ -5,7 +5,7 @@ using StudyLiveAssistant.Core;
 
 namespace StudyLiveAssistant.App.Infrastructure;
 
-public sealed class GlobalHotkeyService(Window owner) : IHotkeyService
+public sealed partial class GlobalHotkeyService(Window owner) : IHotkeyService
 {
     private const int WmHotkey = 0x0312;
     private readonly Dictionary<int, HotkeyAction> _actions = [];

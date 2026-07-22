@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using StudyLiveAssistant.Core;
+using CountdownModel = StudyLiveAssistant.Core.CountdownEvent;
 
 namespace StudyLiveAssistant.App.Infrastructure;
 
@@ -278,19 +279,19 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository
             await command.ExecuteNonQueryAsync(cancellationToken);
         }, cancellationToken);
 
-    public Task<IReadOnlyList<CountdownEvent>> GetCountdownEventsAsync(CancellationToken cancellationToken = default) =>
-        WithConnectionAsync<IReadOnlyList<CountdownEvent>>(async connection =>
+    public Task<IReadOnlyList<CountdownModel>> GetCountdownEventsAsync(CancellationToken cancellationToken = default) =>
+        WithConnectionAsync<IReadOnlyList<CountdownModel>>(async connection =>
         {
             var command = connection.CreateCommand();
             command.CommandText = "SELECT id,name,target_date,is_enabled,sort_order FROM countdown_events ORDER BY sort_order,name";
-            var result = new List<CountdownEvent>();
+            var result = new List<CountdownModel>();
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
-                result.Add(new CountdownEvent { Id = Guid.Parse(reader.GetString(0)), Name = reader.GetString(1), TargetDate = DateOnly.ParseExact(reader.GetString(2), "yyyy-MM-dd", CultureInfo.InvariantCulture), IsEnabled = reader.GetInt32(3) != 0, SortOrder = reader.GetInt32(4) });
+                result.Add(new CountdownModel { Id = Guid.Parse(reader.GetString(0)), Name = reader.GetString(1), TargetDate = DateOnly.ParseExact(reader.GetString(2), "yyyy-MM-dd", CultureInfo.InvariantCulture), IsEnabled = reader.GetInt32(3) != 0, SortOrder = reader.GetInt32(4) });
             return result;
         }, cancellationToken);
 
-    public Task SaveCountdownEventAsync(CountdownEvent countdown, CancellationToken cancellationToken = default) =>
+    public Task SaveCountdownEventAsync(CountdownModel countdown, CancellationToken cancellationToken = default) =>
         WithConnectionAsync(async connection =>
         {
             var command = connection.CreateCommand();
