@@ -30,6 +30,9 @@ jobs:
       - name: Test
         run: dotnet test StudyLiveAssistant.sln --configuration Release --no-restore
 
+      - name: Restore Windows x64 runtime assets
+        run: dotnet restore src/StudyLiveAssistant.App/StudyLiveAssistant.App.csproj --runtime win-x64
+
       - name: Publish self-contained single-file EXE
         shell: pwsh
         run: >-
