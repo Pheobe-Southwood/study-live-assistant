@@ -23,6 +23,46 @@ public sealed class StudySessionServiceTests
     }
 
     [Fact]
+    public async Task Tick_PreservesSubsecondRemaindersAcrossHeartbeats()
+    {
+        var repository = new MemoryRepository();
+        var task = repository.AddTask(ProgressKind.Time, ProgressUnit.Minute, new TimeOnly(8, 0));
+        var clock = new FakeClock(new DateTimeOffset(2026, 7, 22, 8, 0, 0, TimeSpan.Zero));
+        var service = new StudySessionService(repository, clock);
+        await service.LoadDateAsync(task.Date);
+        await service.StartAsync();
+
+        for (var index = 0; index < 120; index++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(950));
+            await service.TickAsync();
+        }
+
+        Assert.Equal(114, task.ElapsedSeconds);
+        Assert.Equal(114, Assert.Single(repository.Sessions).DurationSeconds);
+    }
+
+    [Fact]
+    public async Task PauseAndResume_PreservesRemainderForSameTask()
+    {
+        var repository = new MemoryRepository();
+        var task = repository.AddTask(ProgressKind.Time, ProgressUnit.Minute, new TimeOnly(8, 0));
+        var clock = new FakeClock(new DateTimeOffset(2026, 7, 22, 8, 0, 0, TimeSpan.Zero));
+        var service = new StudySessionService(repository, clock);
+        await service.LoadDateAsync(task.Date);
+
+        await service.StartAsync();
+        clock.Advance(TimeSpan.FromMilliseconds(600));
+        await service.PauseAsync();
+        await service.StartAsync();
+        clock.Advance(TimeSpan.FromMilliseconds(500));
+        await service.TickAsync();
+
+        Assert.Equal(1, task.ElapsedSeconds);
+        Assert.Equal(1, repository.Sessions.Sum(session => session.DurationSeconds));
+    }
+
+    [Fact]
     public async Task Move_PausesCurrentAndSelectsAdjacentTask()
     {
         var repository = new MemoryRepository();

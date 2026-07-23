@@ -18,6 +18,7 @@ public sealed class AppRuntime : IDisposable
     private StudyWindow? _studyWindow;
     private GlobalHotkeyService? _hotkeys;
     private Guid? _lastPersistedTask;
+    private bool _timerTickInProgress;
     private bool _isShuttingDown;
 
     public AppRuntime()
@@ -240,8 +241,11 @@ public sealed class AppRuntime : IDisposable
 
     private async void TimerOnTick(object? sender, EventArgs e)
     {
+        if (_timerTickInProgress) return;
+        _timerTickInProgress = true;
         try { await Engine.TickAsync(); }
         catch (Exception exception) { ReportError(exception, "保存计时进度", false); }
+        finally { _timerTickInProgress = false; }
     }
 
     private void EngineOnStateChanged(object? sender, EventArgs e)

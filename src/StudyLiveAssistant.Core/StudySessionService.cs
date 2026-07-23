@@ -5,6 +5,7 @@ public sealed class StudySessionService(ITaskRepository repository, IClock clock
     private readonly List<StudyTask> _tasks = [];
     private int _currentIndex = -1;
     private DateTimeOffset _lastTick;
+    private long _elapsedRemainderTicks;
     private StudySession? _session;
 
     public IReadOnlyList<StudyTask> Tasks => _tasks;
@@ -16,6 +17,7 @@ public sealed class StudySessionService(ITaskRepository repository, IClock clock
     public async Task LoadDateAsync(DateOnly date, Guid? preferredTaskId = null)
     {
         await PauseAsync("change-date");
+        _elapsedRemainderTicks = 0;
         _tasks.Clear();
         _tasks.AddRange(TaskRules.Sort(await repository.GetTasksAsync(date)));
         _currentIndex = preferredTaskId is { } id ? _tasks.FindIndex(t => t.Id == id) : -1;
@@ -69,15 +71,16 @@ public sealed class StudySessionService(ITaskRepository repository, IClock clock
 
         ApplySegment(now - cursor, now, "heartbeat");
         _lastTick = now;
+        OnStateChanged();
         await repository.SaveTaskAsync(CurrentTask);
         await repository.SaveSessionAsync(_session);
-        OnStateChanged();
     }
 
     public async Task MoveAsync(int offset)
     {
         if (_tasks.Count == 0) return;
         await PauseAsync("switch-task");
+        _elapsedRemainderTicks = 0;
         _currentIndex = Math.Clamp(_currentIndex + Math.Sign(offset), 0, _tasks.Count - 1);
         OnStateChanged();
     }
@@ -104,9 +107,15 @@ public sealed class StudySessionService(ITaskRepository repository, IClock clock
     private void ApplySegment(TimeSpan duration, DateTimeOffset endedAt, string reason)
     {
         if (CurrentTask is null || _session is null || duration <= TimeSpan.Zero) return;
-        TaskRules.AddElapsed(CurrentTask, duration);
+        var accumulatedTicks = checked(_elapsedRemainderTicks + duration.Ticks);
+        var wholeSeconds = accumulatedTicks / TimeSpan.TicksPerSecond;
+        _elapsedRemainderTicks = accumulatedTicks % TimeSpan.TicksPerSecond;
+        if (wholeSeconds > 0)
+        {
+            TaskRules.AddElapsed(CurrentTask, TimeSpan.FromSeconds(wholeSeconds));
+            _session.DurationSeconds += wholeSeconds;
+        }
         _session.EndedAt = endedAt;
-        _session.DurationSeconds += (long)Math.Floor(duration.TotalSeconds);
         _session.EndReason = reason;
     }
 
