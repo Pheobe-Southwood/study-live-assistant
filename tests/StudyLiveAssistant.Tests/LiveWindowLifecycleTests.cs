@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using StudyLiveAssistant.App.ViewModels;
@@ -44,6 +45,9 @@ public sealed class LiveWindowLifecycleTests
                 handle = new WindowInteropHelper(window).Handle;
                 Assert.NotEqual(nint.Zero, handle);
                 Assert.True(IsWindow(handle));
+                Assert.Equal(1280d, window.Width);
+                Assert.Equal(720d, window.Height);
+                AssertNativeSize(window, handle, 1280, 720);
 
                 window.Close();
                 Assert.False(window.IsVisible);
@@ -58,6 +62,7 @@ public sealed class LiveWindowLifecycleTests
                 Assert.Equal(handle, new WindowInteropHelper(window).Handle);
                 Assert.Equal(1440d, window.Width);
                 Assert.Equal(810d, window.Height);
+                AssertNativeSize(window, handle, 1440, 810);
 
                 window.ClosePermanently();
                 Assert.True(viewModel.IsDisposed);
@@ -68,6 +73,20 @@ public sealed class LiveWindowLifecycleTests
                 if (!viewModel.IsDisposed) window.ClosePermanently();
             }
         });
+    }
+
+    private static void AssertNativeSize(LiveWindow window, nint handle, double width, double height)
+    {
+        Assert.True(GetWindowRect(handle, out var bounds));
+        var dpi = VisualTreeHelper.GetDpi(window);
+        Assert.Equal((int)Math.Round(width * dpi.DpiScaleX), bounds.Right - bounds.Left);
+        Assert.Equal((int)Math.Round(height * dpi.DpiScaleY), bounds.Bottom - bounds.Top);
+        window.UpdateLayout();
+        Assert.InRange(Math.Abs(window.ActualWidth - width), 0, 0.5);
+        Assert.InRange(Math.Abs(window.ActualHeight - height), 0, 0.5);
+        var content = Assert.IsAssignableFrom<FrameworkElement>(window.Content);
+        Assert.InRange(Math.Abs(content.ActualWidth - width), 0, 0.5);
+        Assert.InRange(Math.Abs(content.ActualHeight - height), 0, 0.5);
     }
 
     private static void RunOnStaThread(Action action)
@@ -94,6 +113,19 @@ public sealed class LiveWindowLifecycleTests
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsWindow(nint hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(nint hWnd, out NativeRect lpRect);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
 
     private sealed class FakeLiveWindowViewModel : ILiveWindowViewModel
     {

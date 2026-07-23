@@ -4,7 +4,8 @@
         xmlns:views="clr-namespace:StudyLiveAssistant.App.Views"
         Title="自习直播主页面" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="True"
         WindowStartupLocation="Manual" SizeToContent="Manual"
-        Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed"
+        SourceInitialized="Window_SourceInitialized" Loaded="Window_Loaded"
+        Closing="Window_Closing" Closed="Window_Closed"
         LocationChanged="Window_LocationChanged" PreviewMouseLeftButtonDown="Window_PreviewMouseLeftButtonDown">
     <Window.Resources>
         <views:StringToBrushConverter x:Key="StringToBrush"/>
