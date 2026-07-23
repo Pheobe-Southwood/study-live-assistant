@@ -43,6 +43,8 @@ public partial class LiveWindow : Window
         var height = _viewModel.CanvasHeight;
         var left = _viewModel.Appearance.WindowLeft;
         var top = _viewModel.Appearance.WindowTop;
+        MinWidth = width;
+        MinHeight = height;
         Width = width;
         Height = height;
         Left = left;
