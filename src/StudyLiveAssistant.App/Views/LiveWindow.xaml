@@ -49,7 +49,7 @@
                                     <TextBlock Text="{Binding ElapsedText}" FontSize="{Binding DataContext.Appearance.BodyFontSize, RelativeSource={RelativeSource AncestorType=Window}}" Opacity="0.75"/>
                                     <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="{Binding DataContext.Appearance.BodyFontSize, RelativeSource={RelativeSource AncestorType=Window}}" Opacity="0.75"/>
                                 </Grid>
-                                <ProgressBar Height="10" Margin="0,10,0,2" Minimum="0" Maximum="100" Value="{Binding ProgressPercent}"
+                                <ProgressBar Height="10" Margin="0,10,0,2" Minimum="0" Maximum="100" Value="{Binding ProgressPercent, Mode=OneWay}"
                                              Foreground="{Binding AccentColor, Converter={StaticResource StringToBrush}}"
                                              Visibility="{Binding DataContext.ShowProgressBar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}">
                                     <ProgressBar.Template><ControlTemplate TargetType="ProgressBar">
