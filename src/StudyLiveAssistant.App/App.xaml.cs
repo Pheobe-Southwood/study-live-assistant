@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
 using StudyLiveAssistant.App.Infrastructure;
 using StudyLiveAssistant.App.Views;
 
@@ -13,6 +14,7 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        DispatcherUnhandledException += App_DispatcherUnhandledException;
         _singleInstance = new Mutex(true, "PheobeSouthwood.StudyLiveAssistant", out var isFirst);
         if (!isFirst)
         {
@@ -39,8 +41,16 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        DispatcherUnhandledException -= App_DispatcherUnhandledException;
         _runtime?.Dispose();
         _singleInstance?.Dispose();
         base.OnExit(e);
+    }
+
+    private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        if (_runtime is not null) _runtime.ReportError(e.Exception, "界面操作失败");
+        else MessageBox.Show(e.Exception.Message, "界面操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        e.Handled = true;
     }
 }

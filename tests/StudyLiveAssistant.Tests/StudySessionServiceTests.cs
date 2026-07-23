@@ -41,6 +41,25 @@ public sealed class StudySessionServiceTests
     }
 
     [Fact]
+    public async Task Start_CapturesActualStartOnlyOnFirstRun()
+    {
+        var repository = new MemoryRepository();
+        var task = repository.AddTask(ProgressKind.Count, ProgressUnit.Chapter, new TimeOnly(10, 0));
+        var firstStart = new DateTimeOffset(2026, 7, 22, 8, 12, 30, TimeSpan.Zero);
+        var clock = new FakeClock(firstStart);
+        var service = new StudySessionService(repository, clock);
+        await service.LoadDateAsync(task.Date);
+
+        await service.StartAsync();
+        await service.PauseAsync();
+        clock.Advance(TimeSpan.FromHours(1));
+        await service.StartAsync();
+
+        Assert.Equal(firstStart, task.ActualStartedAt);
+        Assert.Equal(new TimeOnly(10, 0), task.ScheduledStart);
+    }
+
+    [Fact]
     public async Task Tick_SplitsSessionAtMidnight()
     {
         var repository = new MemoryRepository();

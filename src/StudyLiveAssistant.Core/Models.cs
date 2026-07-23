@@ -25,7 +25,10 @@ public sealed class StudyTask
     public Guid PrimaryCategoryId { get; set; }
     public Guid SecondaryCategoryId { get; set; }
     public string Detail { get; set; } = string.Empty;
+    /// <summary>用户计划的目标开始时间，用于当天任务排序。</summary>
     public TimeOnly ScheduledStart { get; set; } = new(8, 0);
+    /// <summary>任务第一次实际开始计时时自动记录；用户不能手动编辑。</summary>
+    public DateTimeOffset? ActualStartedAt { get; set; }
     public ProgressKind ProgressKind { get; set; }
     public ProgressUnit Unit { get; set; } = ProgressUnit.Minute;
     public string CustomUnit { get; set; } = string.Empty;

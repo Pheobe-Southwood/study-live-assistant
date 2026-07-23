@@ -73,23 +73,34 @@ public sealed class AppRuntime : IDisposable
 
     public void ShowLiveWindow()
     {
-        if (_liveWindow is not null)
+        LiveViewModel? viewModel = null;
+        try
         {
-            _liveWindow.Activate();
-            return;
-        }
-        var viewModel = new LiveViewModel(this);
-        _liveWindow = new LiveWindow(viewModel);
-        _liveWindow.Closed += (_, _) =>
-        {
-            Settings.Appearance.WindowLeft = _liveWindow?.Left ?? Settings.Appearance.WindowLeft;
-            Settings.Appearance.WindowTop = _liveWindow?.Top ?? Settings.Appearance.WindowTop;
-            _liveWindow = null;
+            if (_liveWindow is not null)
+            {
+                _liveWindow.Activate();
+                return;
+            }
+            viewModel = new LiveViewModel(this);
+            _liveWindow = new LiveWindow(viewModel);
+            _liveWindow.Closed += (_, _) =>
+            {
+                Settings.Appearance.WindowLeft = _liveWindow?.Left ?? Settings.Appearance.WindowLeft;
+                Settings.Appearance.WindowTop = _liveWindow?.Top ?? Settings.Appearance.WindowTop;
+                _liveWindow = null;
+                MainViewModel.RefreshStatus();
+                if (!_isShuttingDown) _ = SaveSettingsSafeAsync();
+            };
+            _liveWindow.Show();
             MainViewModel.RefreshStatus();
-            if (!_isShuttingDown) _ = SaveSettingsSafeAsync();
-        };
-        _liveWindow.Show();
-        MainViewModel.RefreshStatus();
+        }
+        catch (Exception exception)
+        {
+            viewModel?.Dispose();
+            _liveWindow = null;
+            ReportError(exception, "启动直播窗口");
+            MainViewModel.RefreshStatus();
+        }
     }
 
     public void CloseLiveWindow() => _liveWindow?.Close();
@@ -202,7 +213,7 @@ public sealed class AppRuntime : IDisposable
     public void ReportError(Exception exception, string context, bool showMessage = true)
     {
         _logger.Error(exception, context);
-        MainViewModel.StatusMessage = exception.Message;
+        if (MainViewModel is not null) MainViewModel.StatusMessage = exception.Message;
         if (showMessage) MessageBox.Show(exception.Message, context, MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 

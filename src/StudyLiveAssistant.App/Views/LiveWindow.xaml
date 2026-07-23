@@ -40,7 +40,10 @@
                             <StackPanel>
                                 <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <TextBlock Text="{Binding Title}" FontSize="{Binding DataContext.Appearance.TitleFontSize, RelativeSource={RelativeSource AncestorType=Window}}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding TimeText}" FontSize="{Binding DataContext.Appearance.BodyFontSize, RelativeSource={RelativeSource AncestorType=Window}}" Opacity="0.7" Margin="10,0,0,0"/>
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                        <TextBlock Text="{Binding TargetTimeText}" FontSize="{Binding DataContext.Appearance.BodyFontSize, RelativeSource={RelativeSource AncestorType=Window}}" Opacity="0.7"/>
+                                        <TextBlock Text="{Binding ActualStartText}" FontSize="{Binding DataContext.Appearance.BodyFontSize, RelativeSource={RelativeSource AncestorType=Window}}" Opacity="0.55"/>
+                                    </StackPanel>
                                 </Grid>
                                 <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <TextBlock Text="{Binding ElapsedText}" FontSize="{Binding DataContext.Appearance.BodyFontSize, RelativeSource={RelativeSource AncestorType=Window}}" Opacity="0.75"/>

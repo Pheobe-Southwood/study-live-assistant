@@ -11,9 +11,11 @@ public sealed class TaskCardViewModel
     public bool IsCurrent { get; init; }
     public bool IsNext { get; init; }
     public string Title => string.IsNullOrWhiteSpace(Task.Detail) ? $"{PrimaryName} · {SecondaryName}" : $"{PrimaryName} · {SecondaryName}｜{Task.Detail}";
-    public string TimeText => Task.ScheduledStart.ToString("HH:mm");
+    public string TargetTimeText => $"目标 {Task.ScheduledStart:HH:mm}";
+    public string ActualStartText => Task.ActualStartedAt is { } actual ? $"实际 {actual.LocalDateTime:HH:mm}" : "实际 --:--";
     public string ElapsedText => $"已用 {FormatDuration(Task.Elapsed)}";
     public string ProgressText => $"{Task.CurrentValue:0.#} / {Task.TargetValue:0.#} {TaskRules.UnitText(Task)}";
+    public string ProgressTypeText => Task.ProgressKind == ProgressKind.Time ? "时间型" : $"计数型 · {TaskRules.UnitText(Task)}";
     public double ProgressPercent => Task.ProgressRatio * 100;
     public string StatusText => Task.Status switch { StudyTaskStatus.Completed => "已完成", StudyTaskStatus.InProgress => "进行中", _ => "待开始" };
 
@@ -21,6 +23,8 @@ public sealed class TaskCardViewModel
         ? $"{(int)duration.TotalHours:00}:{duration.Minutes:00}:{duration.Seconds:00}"
         : $"{duration.Minutes:00}:{duration.Seconds:00}";
 }
+
+public sealed record ColorPreset(string Name, string Hex);
 
 public sealed class HotkeyEditRow : BindableBase
 {

@@ -68,13 +68,18 @@ public sealed class MainViewModel : BindableBase
     public ObservableCollection<TaskCardViewModel> TaskRows { get; } = [];
     public ObservableCollection<CountdownModel> Countdowns { get; } = [];
     public ObservableCollection<HotkeyEditRow> HotkeyRows { get; } = [];
+    public ObservableCollection<ProgressUnit> AvailableProgressUnits { get; } = [];
 
     public IReadOnlyList<ProgressKind> ProgressKinds { get; } = Enum.GetValues<ProgressKind>();
-    public IReadOnlyList<ProgressUnit> ProgressUnits { get; } = Enum.GetValues<ProgressUnit>();
     public IReadOnlyList<CardTheme> Themes { get; } = Enum.GetValues<CardTheme>();
     public IReadOnlyList<ProgressBarStyle> ProgressStyles { get; } = Enum.GetValues<ProgressBarStyle>();
     public IReadOnlyList<string> ModifierOptions => HotkeyMapping.Modifiers;
     public IReadOnlyList<string> KeyOptions => HotkeyMapping.Keys;
+    public IReadOnlyList<ColorPreset> InfoColorPresets { get; } =
+    [
+        new("雾白", "#F3F4F6"), new("薄荷", "#E8F3EF"), new("晴空", "#E8F1F8"),
+        new("浅杏", "#F7F0E5"), new("淡粉", "#F7ECEF"), new("夜蓝", "#263447")
+    ];
     public AppearanceSettings Appearance => _runtime.Settings.Appearance;
 
     public DateTime SelectedDate
@@ -102,12 +107,23 @@ public sealed class MainViewModel : BindableBase
         get => _selectedCategoryToDelete;
         set
         {
-            if (!SetProperty(ref _selectedCategoryToDelete, value) || value is null) return;
+            if (!SetProperty(ref _selectedCategoryToDelete, value)) return;
+            (DeleteCategoryCommand as AsyncCommand)?.NotifyCanExecuteChanged();
+            (UpdateCategoryCommand as AsyncCommand)?.NotifyCanExecuteChanged();
+            if (value is null) return;
             SelectedCategoryName = value.Name;
             SelectedCategoryAccent = value.AccentColor;
         }
     }
-    public TaskCardViewModel? SelectedTaskRow { get => _selectedTaskRow; set => SetProperty(ref _selectedTaskRow, value); }
+    public TaskCardViewModel? SelectedTaskRow
+    {
+        get => _selectedTaskRow;
+        set
+        {
+            if (!SetProperty(ref _selectedTaskRow, value)) return;
+            (DeleteTaskCommand as AsyncCommand)?.NotifyCanExecuteChanged();
+        }
+    }
     public string TaskDetail { get => _taskDetail; set => SetProperty(ref _taskDetail, value); }
     public string StartTimeText { get => _startTimeText; set => SetProperty(ref _startTimeText, value); }
     public ProgressKind SelectedProgressKind
@@ -116,7 +132,7 @@ public sealed class MainViewModel : BindableBase
         set
         {
             if (!SetProperty(ref _selectedProgressKind, value)) return;
-            SelectedUnit = value == ProgressKind.Time ? ProgressUnit.Minute : ProgressUnit.Chapter;
+            RefreshProgressUnits();
             ExpectedMinutes ??= value == ProgressKind.Time ? (int)Math.Ceiling(TargetValue) : null;
         }
     }
@@ -136,7 +152,9 @@ public sealed class MainViewModel : BindableBase
         get => _selectedCountdown;
         set
         {
-            if (!SetProperty(ref _selectedCountdown, value) || value is null) return;
+            if (!SetProperty(ref _selectedCountdown, value)) return;
+            (DeleteCountdownCommand as AsyncCommand)?.NotifyCanExecuteChanged();
+            if (value is null) return;
             CountdownName = value.Name;
             CountdownDate = value.TargetDate.ToDateTime(TimeOnly.MinValue);
         }
@@ -174,6 +192,7 @@ public sealed class MainViewModel : BindableBase
 
     public async Task InitializeAsync()
     {
+        RefreshProgressUnits();
         await ReloadCategoriesAsync();
         await LoadTasksAsync();
         ReloadCountdowns();
@@ -221,6 +240,7 @@ public sealed class MainViewModel : BindableBase
     {
         var date = DateOnly.FromDateTime(SelectedDate);
         var tasks = await _runtime.Database.GetTasksAsync(date);
+        SelectedTaskRow = null;
         TaskRows.Clear();
         foreach (var task in tasks) TaskRows.Add(CreateTaskRow(task, false, false));
         var plan = await _runtime.Database.GetDailyPlanAsync(date);
@@ -243,7 +263,7 @@ public sealed class MainViewModel : BindableBase
         task.Detail = TaskDetail;
         task.ScheduledStart = start;
         task.ProgressKind = SelectedProgressKind;
-        task.Unit = SelectedProgressKind == ProgressKind.Time ? ProgressUnit.Minute : SelectedUnit;
+        task.Unit = SelectedUnit;
         task.CustomUnit = CustomUnit;
         task.TargetValue = TargetValue;
         task.AdjustmentStep = AdjustmentStep;
@@ -317,9 +337,11 @@ public sealed class MainViewModel : BindableBase
     private async Task AddPrimaryCategoryAsync()
     {
         if (string.IsNullOrWhiteSpace(NewPrimaryName)) throw new ArgumentException("一级类型名称不能为空。");
-        await _runtime.Database.SaveCategoryAsync(new TaskCategory { Name = NewPrimaryName.Trim(), AccentColor = NewCategoryColor, SortOrder = PrimaryCategories.Count });
+        var category = new TaskCategory { Name = NewPrimaryName.Trim(), AccentColor = NewCategoryColor, SortOrder = PrimaryCategories.Count };
+        await _runtime.Database.SaveCategoryAsync(category);
         NewPrimaryName = string.Empty;
         await ReloadCategoriesAsync();
+        SelectedPrimaryCategory = PrimaryCategories.FirstOrDefault(item => item.Id == category.Id);
         StatusMessage = "一级类型已添加。";
     }
 
@@ -327,13 +349,15 @@ public sealed class MainViewModel : BindableBase
     {
         if (SelectedPrimaryCategory is null) throw new ArgumentException("请先选择所属一级类型。");
         if (string.IsNullOrWhiteSpace(NewSecondaryName)) throw new ArgumentException("二级类型名称不能为空。");
-        await _runtime.Database.SaveCategoryAsync(new TaskCategory
+        var category = new TaskCategory
         {
             ParentId = SelectedPrimaryCategory.Id, Name = NewSecondaryName.Trim(),
             AccentColor = SelectedPrimaryCategory.AccentColor, SortOrder = SecondaryCategories.Count
-        });
+        };
+        await _runtime.Database.SaveCategoryAsync(category);
         NewSecondaryName = string.Empty;
         await ReloadCategoriesAsync();
+        SelectedSecondaryCategory = SecondaryCategories.FirstOrDefault(item => item.Id == category.Id);
         StatusMessage = "二级类型已添加。";
     }
 
@@ -379,6 +403,23 @@ public sealed class MainViewModel : BindableBase
         if (SelectedPrimaryCategory is not null)
             foreach (var category in _runtime.Categories.Where(c => c.ParentId == SelectedPrimaryCategory.Id).OrderBy(c => c.SortOrder)) SecondaryCategories.Add(category);
         SelectedSecondaryCategory = SecondaryCategories.FirstOrDefault(c => c.Id == selectedId) ?? SecondaryCategories.FirstOrDefault();
+    }
+
+    private void RefreshProgressUnits()
+    {
+        AvailableProgressUnits.Clear();
+        if (SelectedProgressKind == ProgressKind.Time)
+        {
+            AvailableProgressUnits.Add(ProgressUnit.Minute);
+        }
+        else
+        {
+            AvailableProgressUnits.Add(ProgressUnit.Chapter);
+            AvailableProgressUnits.Add(ProgressUnit.Page);
+            AvailableProgressUnits.Add(ProgressUnit.Question);
+            AvailableProgressUnits.Add(ProgressUnit.Custom);
+        }
+        if (!AvailableProgressUnits.Contains(SelectedUnit)) SelectedUnit = AvailableProgressUnits[0];
     }
 
     private async Task SaveAppearanceAsync()

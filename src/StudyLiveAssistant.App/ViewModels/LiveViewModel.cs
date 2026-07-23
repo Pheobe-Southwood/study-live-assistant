@@ -75,9 +75,16 @@ public sealed class LiveViewModel : BindableBase, IDisposable
 
     private async Task LoadDailyTargetAsync()
     {
-        var plan = await _runtime.Database.GetDailyPlanAsync(DateOnly.FromDateTime(DateTime.Today));
-        _dailyTarget = plan?.TargetStudyMinutes;
-        Refresh();
+        try
+        {
+            var plan = await _runtime.Database.GetDailyPlanAsync(DateOnly.FromDateTime(DateTime.Today));
+            _dailyTarget = plan?.TargetStudyMinutes;
+            Refresh();
+        }
+        catch (Exception exception)
+        {
+            _runtime.ReportError(exception, "读取直播窗口数据", false);
+        }
     }
 
     private string BuildTopInfo()

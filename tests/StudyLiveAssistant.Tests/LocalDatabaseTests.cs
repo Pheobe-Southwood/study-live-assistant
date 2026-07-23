@@ -42,6 +42,7 @@ public sealed class LocalDatabaseTests : IAsyncLifetime
         {
             Date = new DateOnly(2026, 7, 22), PrimaryCategoryId = primary.Id, SecondaryCategoryId = secondary.Id,
             Detail = "测试持久化", ScheduledStart = new TimeOnly(8, 30), ProgressKind = ProgressKind.Count,
+            ActualStartedAt = new DateTimeOffset(2026, 7, 22, 8, 42, 0, TimeSpan.Zero),
             Unit = ProgressUnit.Page, TargetValue = 20, AdjustmentStep = 2
         };
         await _database.SaveTaskAsync(task);
@@ -59,6 +60,9 @@ public sealed class LocalDatabaseTests : IAsyncLifetime
         var loadedSettings = await _database.LoadSettingsAsync();
 
         Assert.Equal("测试持久化", loadedTask.Detail);
+        Assert.Equal(ProgressKind.Count, loadedTask.ProgressKind);
+        Assert.Equal(ProgressUnit.Page, loadedTask.Unit);
+        Assert.Equal(task.ActualStartedAt, loadedTask.ActualStartedAt);
         Assert.Equal(1800, loadedSession.DurationSeconds);
         Assert.Equal(CardTheme.Cute, loadedSettings.Appearance.Theme);
         Assert.Equal(task.Id, loadedSettings.CurrentTaskId);

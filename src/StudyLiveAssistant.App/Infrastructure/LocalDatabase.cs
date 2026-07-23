@@ -44,6 +44,7 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDispo
                 CREATE TABLE IF NOT EXISTS study_tasks(
                     id TEXT PRIMARY KEY, task_date TEXT NOT NULL, primary_category_id TEXT NOT NULL,
                     secondary_category_id TEXT NOT NULL, detail TEXT NOT NULL, scheduled_start TEXT NOT NULL,
+                    actual_started_at TEXT NULL,
                     progress_kind INTEGER NOT NULL, unit INTEGER NOT NULL, custom_unit TEXT NOT NULL,
                     target_value REAL NOT NULL, current_value REAL NOT NULL, adjustment_step REAL NOT NULL,
                     elapsed_seconds INTEGER NOT NULL, expected_total_minutes INTEGER NULL, status INTEGER NOT NULL,
@@ -63,6 +64,7 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDispo
                 CREATE TABLE IF NOT EXISTS app_settings(id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL);
                 """;
             await command.ExecuteNonQueryAsync(cancellationToken);
+            await EnsureTaskActualStartColumnAsync(connection, cancellationToken);
             await SeedCategoriesAsync(connection, cancellationToken);
             await SeedCountdownAsync(connection, cancellationToken);
         }, cancellationToken);
@@ -138,7 +140,7 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDispo
         {
             var command = connection.CreateCommand();
             command.CommandText = """
-                SELECT id,task_date,primary_category_id,secondary_category_id,detail,scheduled_start,
+                SELECT id,task_date,primary_category_id,secondary_category_id,detail,scheduled_start,actual_started_at,
                        progress_kind,unit,custom_unit,target_value,current_value,adjustment_step,
                        elapsed_seconds,expected_total_minutes,status,creation_order
                 FROM study_tasks WHERE task_date=$date ORDER BY scheduled_start,creation_order,id;
@@ -157,12 +159,12 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDispo
         {
             var command = connection.CreateCommand();
             command.CommandText = """
-                INSERT INTO study_tasks(id,task_date,primary_category_id,secondary_category_id,detail,scheduled_start,
+                INSERT INTO study_tasks(id,task_date,primary_category_id,secondary_category_id,detail,scheduled_start,actual_started_at,
                     progress_kind,unit,custom_unit,target_value,current_value,adjustment_step,elapsed_seconds,
                     expected_total_minutes,status,creation_order)
-                VALUES($id,$date,$primary,$secondary,$detail,$start,$kind,$unit,$custom,$target,$current,$step,$elapsed,$expected,$status,$created)
+                VALUES($id,$date,$primary,$secondary,$detail,$start,$actualStart,$kind,$unit,$custom,$target,$current,$step,$elapsed,$expected,$status,$created)
                 ON CONFLICT(id) DO UPDATE SET task_date=$date,primary_category_id=$primary,secondary_category_id=$secondary,
-                    detail=$detail,scheduled_start=$start,progress_kind=$kind,unit=$unit,custom_unit=$custom,
+                    detail=$detail,scheduled_start=$start,actual_started_at=$actualStart,progress_kind=$kind,unit=$unit,custom_unit=$custom,
                     target_value=$target,current_value=$current,adjustment_step=$step,elapsed_seconds=$elapsed,
                     expected_total_minutes=$expected,status=$status;
                 """;
@@ -191,6 +193,7 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDispo
                 Id = Guid.NewGuid(), Date = destination,
                 PrimaryCategoryId = sourceTask.PrimaryCategoryId, SecondaryCategoryId = sourceTask.SecondaryCategoryId,
                 Detail = sourceTask.Detail, ScheduledStart = sourceTask.ScheduledStart,
+                ActualStartedAt = null,
                 ProgressKind = sourceTask.ProgressKind, Unit = sourceTask.Unit, CustomUnit = sourceTask.CustomUnit,
                 TargetValue = sourceTask.TargetValue, AdjustmentStep = sourceTask.AdjustmentStep,
                 ExpectedTotalMinutes = sourceTask.ExpectedTotalMinutes, CreationOrder = order++
@@ -348,10 +351,11 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDispo
         Id = Guid.Parse(reader.GetString(0)), Date = DateOnly.ParseExact(reader.GetString(1), "yyyy-MM-dd", CultureInfo.InvariantCulture),
         PrimaryCategoryId = Guid.Parse(reader.GetString(2)), SecondaryCategoryId = Guid.Parse(reader.GetString(3)),
         Detail = reader.GetString(4), ScheduledStart = TimeOnly.ParseExact(reader.GetString(5), "HH:mm", CultureInfo.InvariantCulture),
-        ProgressKind = (ProgressKind)reader.GetInt32(6), Unit = (ProgressUnit)reader.GetInt32(7), CustomUnit = reader.GetString(8),
-        TargetValue = reader.GetDouble(9), CurrentValue = reader.GetDouble(10), AdjustmentStep = reader.GetDouble(11),
-        ElapsedSeconds = reader.GetInt64(12), ExpectedTotalMinutes = reader.IsDBNull(13) ? null : reader.GetInt32(13),
-        Status = (StudyTaskStatus)reader.GetInt32(14), CreationOrder = reader.GetInt64(15)
+        ActualStartedAt = reader.IsDBNull(6) ? null : DateTimeOffset.Parse(reader.GetString(6), CultureInfo.InvariantCulture),
+        ProgressKind = (ProgressKind)reader.GetInt32(7), Unit = (ProgressUnit)reader.GetInt32(8), CustomUnit = reader.GetString(9),
+        TargetValue = reader.GetDouble(10), CurrentValue = reader.GetDouble(11), AdjustmentStep = reader.GetDouble(12),
+        ElapsedSeconds = reader.GetInt64(13), ExpectedTotalMinutes = reader.IsDBNull(14) ? null : reader.GetInt32(14),
+        Status = (StudyTaskStatus)reader.GetInt32(15), CreationOrder = reader.GetInt64(16)
     };
 
     private static void AddTaskParameters(SqliteCommand command, StudyTask task)
@@ -362,6 +366,7 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDispo
         command.Parameters.AddWithValue("$secondary", task.SecondaryCategoryId.ToString());
         command.Parameters.AddWithValue("$detail", task.Detail.Trim());
         command.Parameters.AddWithValue("$start", task.ScheduledStart.ToString("HH:mm", CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue("$actualStart", (object?)task.ActualStartedAt?.ToString("O") ?? DBNull.Value);
         command.Parameters.AddWithValue("$kind", (int)task.ProgressKind);
         command.Parameters.AddWithValue("$unit", (int)task.Unit);
         command.Parameters.AddWithValue("$custom", task.CustomUnit.Trim());
@@ -399,6 +404,33 @@ public sealed class LocalDatabase : ITaskRepository, ISettingsRepository, IDispo
             foreach (var child in seed.Children)
                 await InsertCategoryAsync(connection, Guid.NewGuid(), parent, child, seed.Color, childOrder++, cancellationToken);
         }
+    }
+
+    private static async Task EnsureTaskActualStartColumnAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        var info = connection.CreateCommand();
+        info.CommandText = "PRAGMA table_info(study_tasks)";
+        var exists = false;
+        await using (var reader = await info.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (string.Equals(reader.GetString(1), "actual_started_at", StringComparison.OrdinalIgnoreCase))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+        if (!exists)
+        {
+            var alter = connection.CreateCommand();
+            alter.CommandText = "ALTER TABLE study_tasks ADD COLUMN actual_started_at TEXT NULL";
+            await alter.ExecuteNonQueryAsync(cancellationToken);
+        }
+        var version = connection.CreateCommand();
+        version.CommandText = "UPDATE schema_info SET version=2";
+        await version.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task InsertCategoryAsync(SqliteConnection connection, Guid id, Guid? parent, string name, string color, int order, CancellationToken cancellationToken)

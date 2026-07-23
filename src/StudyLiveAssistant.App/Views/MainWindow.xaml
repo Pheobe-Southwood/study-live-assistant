@@ -6,6 +6,7 @@
         WindowStartupLocation="CenterScreen" Closing="MainWindow_Closing">
     <Window.Resources>
         <views:EnumTextConverter x:Key="EnumText"/>
+        <views:StringToBrushConverter x:Key="StringToBrush"/>
         <Style TargetType="TabItem">
             <Setter Property="Width" Value="150"/><Setter Property="Height" Value="48"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="Padding" Value="18,0"/>
@@ -59,15 +60,28 @@
                         <StackPanel><TextBlock Text="窗口 X"/><TextBox Width="100" Text="{Binding Appearance.WindowLeft}"/></StackPanel>
                         <StackPanel><TextBlock Text="窗口 Y"/><TextBox Width="100" Text="{Binding Appearance.WindowTop}"/></StackPanel>
                     </WrapPanel><StackPanel Orientation="Horizontal"><Button Content="1920 × 1080" Click="Canvas1080_Click"/><Button Content="1280 × 720" Click="Canvas720_Click"/></StackPanel></StackPanel></GroupBox>
-                    <GroupBox Header="颜色与字体"><WrapPanel>
+                    <GroupBox Header="颜色与字体"><StackPanel>
+                        <TextBlock Text="信息区颜色预设" FontWeight="SemiBold" Margin="4"/>
+                        <ListBox ItemsSource="{Binding InfoColorPresets}" SelectedValuePath="Hex" SelectedValue="{Binding Appearance.InfoBackgroundColor, Mode=TwoWay}"
+                                 BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch" Margin="0,4,0,10">
+                            <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate><DataTemplate>
+                                <StackPanel Width="92" Margin="3">
+                                    <Border Height="38" CornerRadius="7" Background="{Binding Hex, Converter={StaticResource StringToBrush}}" BorderBrush="#33000000" BorderThickness="1"/>
+                                    <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </DataTemplate></ListBox.ItemTemplate>
+                        </ListBox>
+                        <WrapPanel>
                         <StackPanel><TextBlock Text="绿幕颜色"/><TextBox Width="130" Text="{Binding Appearance.ChromaColor}"/></StackPanel>
-                        <StackPanel><TextBlock Text="信息区颜色"/><TextBox Width="130" Text="{Binding Appearance.InfoBackgroundColor}"/></StackPanel>
+                        <StackPanel><TextBlock Text="信息区自定义色值"/><TextBox Width="150" Text="{Binding Appearance.InfoBackgroundColor}"/></StackPanel>
                         <StackPanel><TextBlock Text="字体颜色"/><TextBox Width="130" Text="{Binding Appearance.FontColor}"/></StackPanel>
                         <StackPanel><TextBlock Text="字体"/><TextBox Width="180" Text="{Binding Appearance.FontFamily}"/></StackPanel>
                         <StackPanel><TextBlock Text="上栏字号"/><TextBox Width="100" Text="{Binding Appearance.TopFontSize}"/></StackPanel>
                         <StackPanel><TextBlock Text="标题字号"/><TextBox Width="100" Text="{Binding Appearance.TitleFontSize}"/></StackPanel>
                         <StackPanel><TextBlock Text="正文字号"/><TextBox Width="100" Text="{Binding Appearance.BodyFontSize}"/></StackPanel>
-                    </WrapPanel></GroupBox>
+                        </WrapPanel>
+                    </StackPanel></GroupBox>
                     <GroupBox Header="信息区背景图"><StackPanel>
                         <TextBlock Text="{Binding Appearance.InfoBackgroundImage, TargetNullValue=未选择背景图}" Style="{StaticResource Hint}"/>
                         <StackPanel Orientation="Horizontal"><Button Content="导入图片" Click="BrowseBackground_Click"/><Button Content="恢复纯色" Command="{Binding ClearBackgroundCommand}"/></StackPanel>
@@ -89,14 +103,22 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
                     <TextBlock Text="学习任务管理" Style="{StaticResource SectionTitle}"/>
                     <WrapPanel Margin="4"><TextBlock Text="计划日期" VerticalAlignment="Center"/><DatePicker SelectedDate="{Binding SelectedDate}"/><Button Content="复制前一天任务" Command="{Binding CopyPreviousDayCommand}"/><TextBlock Text="每日目标（分钟）" VerticalAlignment="Center" Margin="12,0,0,0"/><TextBox Width="100" Text="{Binding DailyTargetMinutes, TargetNullValue=''}"/><Button Content="保存目标" Command="{Binding SaveDailyTargetCommand}"/></WrapPanel>
+                    <GroupBox Header="一级 / 二级任务类型自定义"><StackPanel>
+                        <TextBlock Text="先添加一级类型；添加二级类型时，从下拉框选择它所属的一级类型。" Style="{StaticResource Hint}"/>
+                        <WrapPanel><TextBlock Text="新一级类型" VerticalAlignment="Center"/><TextBox Width="180" Text="{Binding NewPrimaryName}"/><TextBlock Text="强调色" VerticalAlignment="Center"/><TextBox Width="110" Text="{Binding NewCategoryColor}"/><Button Content="添加一级类型" Style="{StaticResource PrimaryButton}" Command="{Binding AddPrimaryCategoryCommand}"/></WrapPanel>
+                        <WrapPanel><TextBlock Text="所属一级类型" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding PrimaryCategories}" SelectedItem="{Binding SelectedPrimaryCategory}" DisplayMemberPath="Name"/><TextBlock Text="新二级类型" VerticalAlignment="Center"/><TextBox Width="180" Text="{Binding NewSecondaryName}"/><Button Content="添加二级类型" Style="{StaticResource PrimaryButton}" Command="{Binding AddSecondaryCategoryCommand}"/></WrapPanel>
+                        <Separator Margin="4,10"/>
+                        <WrapPanel><TextBlock Text="修改已有类型" VerticalAlignment="Center"/><ComboBox Width="230" ItemsSource="{Binding AllCategories}" SelectedItem="{Binding SelectedCategoryToDelete}" DisplayMemberPath="Name"/><TextBox Width="180" Text="{Binding SelectedCategoryName}"/><TextBox Width="110" Text="{Binding SelectedCategoryAccent}"/><Button Content="更新" Command="{Binding UpdateCategoryCommand}"/><Button Content="删除" Command="{Binding DeleteCategoryCommand}"/></WrapPanel>
+                        <TextBlock Text="内置和自定义类型都能重命名、换色；已被任务引用的类型不能删除，以保护历史数据。" Style="{StaticResource Hint}"/>
+                    </StackPanel></GroupBox>
                     <GroupBox Header="任务编辑器"><StackPanel>
                         <WrapPanel>
                             <StackPanel><TextBlock Text="一级类型"/><ComboBox ItemsSource="{Binding PrimaryCategories}" SelectedItem="{Binding SelectedPrimaryCategory}" DisplayMemberPath="Name"/></StackPanel>
                             <StackPanel><TextBlock Text="二级类型"/><ComboBox ItemsSource="{Binding SecondaryCategories}" SelectedItem="{Binding SelectedSecondaryCategory}" DisplayMemberPath="Name"/></StackPanel>
                             <StackPanel><TextBlock Text="详细信息（可选）"/><TextBox Width="220" Text="{Binding TaskDetail}"/></StackPanel>
-                            <StackPanel><TextBlock Text="起始时间 HH:mm"/><TextBox Width="110" Text="{Binding StartTimeText}"/></StackPanel>
+                            <StackPanel><TextBlock Text="目标开始时间 HH:mm"/><TextBox Width="130" Text="{Binding StartTimeText}"/></StackPanel>
                             <StackPanel><TextBlock Text="进度类型"/><ComboBox ItemsSource="{Binding ProgressKinds}" SelectedItem="{Binding SelectedProgressKind}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumText}}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox></StackPanel>
-                            <StackPanel><TextBlock Text="单位"/><ComboBox ItemsSource="{Binding ProgressUnits}" SelectedItem="{Binding SelectedUnit}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumText}}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox></StackPanel>
+                            <StackPanel><TextBlock Text="进度单位"/><ComboBox ItemsSource="{Binding AvailableProgressUnits}" SelectedItem="{Binding SelectedUnit}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumText}}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox></StackPanel>
                             <StackPanel><TextBlock Text="自定义单位"/><TextBox Width="110" Text="{Binding CustomUnit}"/></StackPanel>
                             <StackPanel><TextBlock Text="目标值"/><TextBox Width="100" Text="{Binding TargetValue}"/></StackPanel>
                             <StackPanel><TextBlock Text="加减步长"/><TextBox Width="100" Text="{Binding AdjustmentStep}"/></StackPanel>
@@ -106,17 +128,11 @@
                     </StackPanel></GroupBox>
                     <DataGrid ItemsSource="{Binding TaskRows}" SelectedItem="{Binding SelectedTaskRow}" AutoGenerateColumns="False" IsReadOnly="True" Height="245" Margin="8">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="开始" Binding="{Binding TimeText}" Width="70"/><DataGridTextColumn Header="任务" Binding="{Binding Title}" Width="*"/>
-                            <DataGridTextColumn Header="已用时间" Binding="{Binding ElapsedText}" Width="120"/><DataGridTextColumn Header="进度" Binding="{Binding ProgressText}" Width="150"/><DataGridTextColumn Header="状态" Binding="{Binding StatusText}" Width="80"/>
+                            <DataGridTextColumn Header="目标开始" Binding="{Binding TargetTimeText}" Width="95"/><DataGridTextColumn Header="实际开始" Binding="{Binding ActualStartText}" Width="95"/><DataGridTextColumn Header="任务" Binding="{Binding Title}" Width="*"/>
+                            <DataGridTextColumn Header="进度类型" Binding="{Binding ProgressTypeText}" Width="110"/><DataGridTextColumn Header="已用时间" Binding="{Binding ElapsedText}" Width="120"/><DataGridTextColumn Header="进度" Binding="{Binding ProgressText}" Width="150"/><DataGridTextColumn Header="状态" Binding="{Binding StatusText}" Width="80"/>
                         </DataGrid.Columns>
                     </DataGrid>
                     <StackPanel Orientation="Horizontal"><Button Content="编辑所选" Command="{Binding EditTaskCommand}"/><Button Content="删除所选" Command="{Binding DeleteTaskCommand}"/></StackPanel>
-                    <GroupBox Header="任务类型管理"><StackPanel>
-                        <WrapPanel><TextBox Width="180" Text="{Binding NewPrimaryName}"/><TextBox Width="110" Text="{Binding NewCategoryColor}"/><Button Content="新增一级类型" Command="{Binding AddPrimaryCategoryCommand}"/></WrapPanel>
-                        <WrapPanel><TextBlock Text="所属一级类型" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding PrimaryCategories}" SelectedItem="{Binding SelectedPrimaryCategory}" DisplayMemberPath="Name"/><TextBox Width="180" Text="{Binding NewSecondaryName}"/><Button Content="新增二级类型" Command="{Binding AddSecondaryCategoryCommand}"/></WrapPanel>
-                        <WrapPanel><ComboBox Width="230" ItemsSource="{Binding AllCategories}" SelectedItem="{Binding SelectedCategoryToDelete}" DisplayMemberPath="Name"/><TextBox Width="180" Text="{Binding SelectedCategoryName}"/><TextBox Width="110" Text="{Binding SelectedCategoryAccent}"/><Button Content="更新所选类型" Command="{Binding UpdateCategoryCommand}"/><Button Content="删除所选类型" Command="{Binding DeleteCategoryCommand}"/></WrapPanel>
-                        <TextBlock Text="内置与自定义类型均可修改；已被任务引用的类型为保护历史数据不能删除。" Style="{StaticResource Hint}"/>
-                    </StackPanel></GroupBox>
                 </StackPanel></ScrollViewer>
             </TabItem>
 

@@ -54,7 +54,6 @@ public partial class LiveWindow : Window
     private void StartTopAnimation()
     {
         if (!IsLoaded) return;
-        TopInfoText.BeginAnimation(RenderTransformProperty, null);
         var transform = TopInfoText.RenderTransform as TranslateTransform ?? new TranslateTransform();
         TopInfoText.RenderTransform = transform;
         transform.BeginAnimation(TranslateTransform.XProperty, null);

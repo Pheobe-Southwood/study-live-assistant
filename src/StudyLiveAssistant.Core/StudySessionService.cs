@@ -24,15 +24,16 @@ public sealed class StudySessionService(ITaskRepository repository, IClock clock
         OnStateChanged();
     }
 
-    public Task StartAsync()
+    public async Task StartAsync()
     {
-        if (CurrentTask is null || IsRunning) return Task.CompletedTask;
+        if (CurrentTask is null || IsRunning) return;
         IsRunning = true;
         _lastTick = clock.Now;
+        CurrentTask.ActualStartedAt ??= _lastTick;
         _session = new StudySession { TaskId = CurrentTask.Id, StartedAt = _lastTick, EndedAt = _lastTick };
         if (CurrentTask.Status == StudyTaskStatus.Pending) CurrentTask.Status = StudyTaskStatus.InProgress;
+        await repository.SaveTaskAsync(CurrentTask);
         OnStateChanged();
-        return Task.CompletedTask;
     }
 
     public async Task PauseAsync(string reason = "pause")
