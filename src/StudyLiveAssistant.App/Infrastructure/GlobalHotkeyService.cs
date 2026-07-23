@@ -16,13 +16,18 @@ public sealed partial class GlobalHotkeyService(Window owner) : IHotkeyService
 
     public void Attach()
     {
-        _handle = new WindowInteropHelper(owner).Handle;
+        var helper = new WindowInteropHelper(owner);
+        _handle = helper.Handle;
+        if (_handle == IntPtr.Zero) _handle = helper.EnsureHandle();
+        if (_handle == IntPtr.Zero) throw new InvalidOperationException("无法取得主窗口句柄，全局快捷键未启动。");
         _source = HwndSource.FromHwnd(_handle);
+        if (_source is null) throw new InvalidOperationException("无法连接主窗口消息源，全局快捷键未启动。");
         _source?.AddHook(WndProc);
     }
 
     public IReadOnlyList<string> Register(IEnumerable<HotkeyBinding> bindings)
     {
+        if (_handle == IntPtr.Zero) return ["主窗口尚未完成初始化，快捷键未注册。"];
         UnregisterAll();
         var errors = new List<string>();
         var seen = new HashSet<(uint, uint)>();

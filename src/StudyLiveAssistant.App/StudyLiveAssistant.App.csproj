@@ -8,7 +8,7 @@
     <RootNamespace>StudyLiveAssistant.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <DebugType>embedded</DebugType>
-    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionPrefix>0.1.1</VersionPrefix>
     <Authors>Pheobe-Southwood</Authors>
     <Product>自习直播助手</Product>
     <Description>面向自习直播的本地任务管理、计时和绿幕信息画布。</Description>

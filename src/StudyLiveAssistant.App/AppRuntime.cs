@@ -56,11 +56,7 @@ public sealed class AppRuntime : IDisposable
     public void AttachMainWindow(MainWindow window)
     {
         _mainWindow = window;
-        _hotkeys = new GlobalHotkeyService(window);
-        _hotkeys.Attach();
-        _hotkeys.Triggered += HotkeysOnTriggered;
-        var errors = _hotkeys.Register(Settings.Hotkeys);
-        if (errors.Count > 0) MainViewModel.StatusMessage = string.Join(" ", errors);
+        window.SourceInitialized += MainWindowOnSourceInitialized;
     }
 
     public async Task RefreshReferenceDataAsync()
@@ -168,6 +164,7 @@ public sealed class AppRuntime : IDisposable
     {
         _isShuttingDown = true;
         _timer.Stop();
+        if (_mainWindow is not null) _mainWindow.SourceInitialized -= MainWindowOnSourceInitialized;
         try
         {
             Engine.PauseAsync("application-exit").GetAwaiter().GetResult();
@@ -179,6 +176,27 @@ public sealed class AppRuntime : IDisposable
         _studyWindow?.Close();
         _liveWindow?.Close();
         Database.Dispose();
+    }
+
+    private void MainWindowOnSourceInitialized(object? sender, EventArgs e)
+    {
+        if (_mainWindow is null || _hotkeys is not null) return;
+        _mainWindow.SourceInitialized -= MainWindowOnSourceInitialized;
+        try
+        {
+            _hotkeys = new GlobalHotkeyService(_mainWindow);
+            _hotkeys.Attach();
+            _hotkeys.Triggered += HotkeysOnTriggered;
+            var errors = _hotkeys.Register(Settings.Hotkeys);
+            if (errors.Count > 0) MainViewModel.StatusMessage = string.Join(" ", errors);
+        }
+        catch (Exception exception)
+        {
+            _hotkeys?.Dispose();
+            _hotkeys = null;
+            ReportError(exception, "初始化全局快捷键", false);
+            MainViewModel.StatusMessage = "应用已启动，但全局快捷键初始化失败。";
+        }
     }
 
     public void ReportError(Exception exception, string context, bool showMessage = true)
