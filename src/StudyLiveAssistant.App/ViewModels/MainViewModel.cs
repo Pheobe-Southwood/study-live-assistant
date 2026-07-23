@@ -165,7 +165,11 @@ public sealed class MainViewModel : BindableBase
     public string TodayStatistics { get => _todayStatistics; set => SetProperty(ref _todayStatistics, value); }
     public string WeekStatistics { get => _weekStatistics; set => SetProperty(ref _weekStatistics, value); }
     public string MonthStatistics { get => _monthStatistics; set => SetProperty(ref _monthStatistics, value); }
-    public string WindowStatus => _runtime.IsLiveWindowOpen ? "直播窗口：已启动" : "直播窗口：未启动";
+    public string WindowStatus => _runtime.IsLiveWindowVisible
+        ? "直播窗口：已显示"
+        : _runtime.IsLiveWindowCreated
+            ? "直播窗口：已隐藏（保持捕获）"
+            : "直播窗口：未启动";
     public string TimerStatus => _runtime.Engine.IsRunning ? "当前计时：进行中" : "当前计时：已暂停";
     public string CurrentTaskStatus => _runtime.Engine.CurrentTask is { } task ? $"当前任务：{FindCategoryName(task.PrimaryCategoryId)} · {FindCategoryName(task.SecondaryCategoryId)}" : "当前任务：今日暂无任务";
 

@@ -38,7 +38,8 @@ public sealed class AppRuntime : IDisposable
     public IReadOnlyList<CountdownModel> Countdowns { get; private set; } = [];
     public MainViewModel MainViewModel { get; private set; } = null!;
     public string AssetsDirectory => Path.Combine(_dataDirectory, "Assets");
-    public bool IsLiveWindowOpen => _liveWindow is not null;
+    public bool IsLiveWindowCreated => _liveWindow is not null;
+    public bool IsLiveWindowVisible => _liveWindow?.IsVisible == true;
     public bool IsStudyWindowOpen => _studyWindow is not null;
 
     public async Task InitializeAsync()
@@ -78,32 +79,46 @@ public sealed class AppRuntime : IDisposable
         {
             if (_liveWindow is not null)
             {
+                if (!_liveWindow.IsVisible) _liveWindow.Show();
+                _liveWindow.ApplyAppearance();
                 _liveWindow.Activate();
+                MainViewModel.RefreshStatus();
                 return;
             }
             viewModel = new LiveViewModel(this);
-            _liveWindow = new LiveWindow(viewModel);
-            _liveWindow.Closed += (_, _) =>
+            var window = new LiveWindow(viewModel);
+            _liveWindow = window;
+            window.HideRequested += LiveWindowOnHideRequested;
+            window.Closed += (_, _) =>
             {
-                Settings.Appearance.WindowLeft = _liveWindow?.Left ?? Settings.Appearance.WindowLeft;
-                Settings.Appearance.WindowTop = _liveWindow?.Top ?? Settings.Appearance.WindowTop;
-                _liveWindow = null;
+                window.HideRequested -= LiveWindowOnHideRequested;
+                CaptureLiveWindowPosition(window);
+                if (ReferenceEquals(_liveWindow, window)) _liveWindow = null;
                 MainViewModel.RefreshStatus();
                 if (!_isShuttingDown) _ = SaveSettingsSafeAsync();
             };
-            _liveWindow.Show();
+            window.Show();
+            window.ApplyAppearance();
             MainViewModel.RefreshStatus();
         }
         catch (Exception exception)
         {
-            viewModel?.Dispose();
+            if (_liveWindow is not null)
+            {
+                _liveWindow.ClosePermanently();
+                _liveWindow = null;
+            }
+            else
+            {
+                viewModel?.Dispose();
+            }
             _liveWindow = null;
             ReportError(exception, "启动直播窗口");
             MainViewModel.RefreshStatus();
         }
     }
 
-    public void CloseLiveWindow() => _liveWindow?.Close();
+    public void CloseLiveWindow() => _liveWindow?.RequestHide();
 
     public async Task EnterStudyModeAsync()
     {
@@ -171,9 +186,16 @@ public sealed class AppRuntime : IDisposable
         MainViewModel.RefreshStatus();
     }
 
+    public void PrepareForShutdown()
+    {
+        if (_isShuttingDown) return;
+        _isShuttingDown = true;
+        _liveWindow?.ClosePermanently();
+    }
+
     public void Dispose()
     {
-        _isShuttingDown = true;
+        PrepareForShutdown();
         _timer.Stop();
         if (_mainWindow is not null) _mainWindow.SourceInitialized -= MainWindowOnSourceInitialized;
         try
@@ -185,7 +207,6 @@ public sealed class AppRuntime : IDisposable
         catch (Exception exception) { _logger.Error(exception, "关闭应用"); }
         _hotkeys?.Dispose();
         _studyWindow?.Close();
-        _liveWindow?.Close();
         Database.Dispose();
     }
 
@@ -258,6 +279,19 @@ public sealed class AppRuntime : IDisposable
     {
         try { await Database.SaveSettingsAsync(Settings); }
         catch (Exception exception) { _logger.Error(exception, "保存设置"); }
+    }
+
+    private void LiveWindowOnHideRequested(object? sender, EventArgs e)
+    {
+        if (sender is LiveWindow window) CaptureLiveWindowPosition(window);
+        MainViewModel.RefreshStatus();
+        if (!_isShuttingDown) _ = SaveSettingsSafeAsync();
+    }
+
+    private void CaptureLiveWindowPosition(LiveWindow window)
+    {
+        Settings.Appearance.WindowLeft = window.Left;
+        Settings.Appearance.WindowTop = window.Top;
     }
 
     private static HotkeyBinding CloneBinding(HotkeyBinding source) => new()

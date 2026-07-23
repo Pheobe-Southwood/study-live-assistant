@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -5,7 +6,17 @@ using StudyLiveAssistant.Core;
 
 namespace StudyLiveAssistant.App.ViewModels;
 
-public sealed class LiveViewModel : BindableBase, IDisposable
+internal interface ILiveWindowViewModel : INotifyPropertyChanged, IDisposable
+{
+    AppearanceSettings Appearance { get; }
+    double CanvasWidth { get; }
+    double CanvasHeight { get; }
+    bool ScrollTopBar { get; }
+    double ScrollSpeed { get; }
+    void RefreshAppearance();
+}
+
+internal sealed class LiveViewModel : BindableBase, ILiveWindowViewModel
 {
     private readonly AppRuntime _runtime;
     private int? _dailyTarget;

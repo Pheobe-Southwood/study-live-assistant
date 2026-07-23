@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:StudyLiveAssistant.App.Views"
         Title="自习直播主页面" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="True"
-        Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}"
-        Left="{Binding Appearance.WindowLeft}" Top="{Binding Appearance.WindowTop}"
-        Loaded="Window_Loaded" Closed="Window_Closed" LocationChanged="Window_LocationChanged" MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        WindowStartupLocation="Manual" SizeToContent="Manual"
+        Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed"
+        LocationChanged="Window_LocationChanged" PreviewMouseLeftButtonDown="Window_PreviewMouseLeftButtonDown">
     <Window.Resources>
         <views:StringToBrushConverter x:Key="StringToBrush"/>
         <views:ThemeCornerRadiusConverter x:Key="ThemeCorner"/>

@@ -7,11 +7,13 @@ namespace StudyLiveAssistant.App.Views;
 
 public partial class MainWindow : Window
 {
+    private readonly AppRuntime _runtime;
     private bool _closing;
 
     public MainWindow(AppRuntime runtime)
     {
         InitializeComponent();
+        _runtime = runtime;
         DataContext = runtime.MainViewModel;
     }
 
@@ -39,6 +41,7 @@ public partial class MainWindow : Window
     {
         if (_closing) return;
         _closing = true;
+        _runtime.PrepareForShutdown();
         Application.Current.Shutdown();
     }
 }

@@ -9,35 +9,65 @@ namespace StudyLiveAssistant.App.Views;
 
 public partial class LiveWindow : Window
 {
-    private readonly LiveViewModel _viewModel;
+    private readonly ILiveWindowViewModel _viewModel;
+    private bool _allowPermanentClose;
 
-    public LiveWindow(LiveViewModel viewModel)
+    internal LiveWindow(ILiveWindowViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = viewModel;
         viewModel.PropertyChanged += ViewModelOnPropertyChanged;
+        ApplyConfiguredBounds();
     }
+
+    public event EventHandler? HideRequested;
 
     public void ApplyAppearance()
     {
         _viewModel.RefreshAppearance();
+        ApplyConfiguredBounds();
+        StartTopAnimation();
+    }
+
+    internal void ApplyConfiguredBounds()
+    {
         Width = _viewModel.CanvasWidth;
         Height = _viewModel.CanvasHeight;
-        StartTopAnimation();
+        Left = _viewModel.Appearance.WindowLeft;
+        Top = _viewModel.Appearance.WindowTop;
+    }
+
+    public void RequestHide()
+    {
+        if (IsVisible) Hide();
+        HideRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void ClosePermanently()
+    {
+        _allowPermanentClose = true;
+        Close();
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e) => StartTopAnimation();
 
-    private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void Window_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ButtonState == MouseButtonState.Pressed && Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) DragMove();
+        if (e.ButtonState == MouseButtonState.Pressed) DragMove();
     }
 
     private void Window_LocationChanged(object? sender, EventArgs e)
     {
         _viewModel.Appearance.WindowLeft = Left;
         _viewModel.Appearance.WindowTop = Top;
+    }
+
+    private void Window_Closing(object? sender, CancelEventArgs e)
+    {
+        if (_allowPermanentClose) return;
+        e.Cancel = true;
+        RequestHide();
     }
 
     private void Window_Closed(object? sender, EventArgs e)
